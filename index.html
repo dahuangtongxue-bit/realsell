@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SparkClaw 渠道招商 · 运营记录系统</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700;900&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --primary:#0A1628; --primary-2:#152841; --primary-3:#1d3354;
+  --accent:#00D9FF; --accent-dim:#0095B8;
+  --gold:#FFB627; --gold-dim:#C88A0F;
+  --success:#00C896; --warn:#FF6B47; --pause:#E0A93C;
+  --muted:#8B95A7; --muted-2:#5A6878;
+  --line:rgba(255,255,255,0.08); --line-2:rgba(255,255,255,0.14);
+  --serif:'Noto Serif SC',serif; --sans:'Noto Sans SC',system-ui,sans-serif; --mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--primary);color:#E8ECF2;font-family:var(--sans);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(900px 500px at 85% -10%,rgba(0,217,255,.08),transparent 60%),radial-gradient(800px 500px at -10% 110%,rgba(255,182,39,.06),transparent 60%);}
+.mono{font-family:var(--mono)}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select,textarea{font-family:inherit;font-size:14px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+.hidden{display:none!important}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:9px;font-weight:700;font-size:13px;border:1px solid var(--line-2);background:rgba(255,255,255,.04);color:#E8ECF2;transition:.15s}
+.btn:hover{background:rgba(255,255,255,.09);border-color:var(--accent-dim)}
+.btn.primary{background:linear-gradient(180deg,var(--accent),var(--accent-dim));color:#04222b;border-color:transparent}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.gold{background:linear-gradient(180deg,var(--gold),var(--gold-dim));color:#2a1c00;border-color:transparent}
+.btn.gold:hover{filter:brightness(1.07)}
+.btn.ghost{background:transparent}
+.btn.sm{padding:5px 10px;font-size:12px;border-radius:7px}
+.btn.danger:hover{border-color:var(--warn);color:#ffb3a1}
+
+/* ---------- LOGIN ---------- */
+#login{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:20px}
+.login-card{position:relative;z-index:1;width:100%;max-width:430px;background:linear-gradient(180deg,rgba(21,40,65,.9),rgba(10,22,40,.92));border:1px solid var(--line-2);border-radius:18px;padding:38px 34px;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+.brand-eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.22em;color:var(--accent);font-weight:700;display:flex;align-items:center;gap:10px}
+.brand-eyebrow::before{content:"";width:26px;height:2px;background:var(--gold)}
+.login-card h1{font-family:var(--serif);font-weight:900;font-size:27px;margin:14px 0 4px;letter-spacing:.01em}
+.login-card h1 em{color:var(--gold);font-style:normal}
+.login-card .sub{color:var(--muted);font-size:13px;margin-bottom:24px}
+.fieldlabel{font-size:12px;color:var(--muted);font-weight:700;margin-bottom:7px;letter-spacing:.04em}
+.login-card input[type=text],.login-card input[type=password]{width:100%;padding:12px 14px;background:rgba(255,255,255,.04);border:1px solid var(--line-2);border-radius:10px;color:#fff;font-size:15px}
+.login-err{color:var(--warn);font-size:12.5px;font-weight:700;min-height:15px;margin-top:9px}
+.login-card input[type=text]::placeholder{color:var(--muted-2)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.chip{padding:7px 12px;border-radius:999px;border:1px solid var(--line-2);background:rgba(255,255,255,.03);font-size:12.5px;color:#cdd5e0;transition:.15s}
+.chip:hover{border-color:var(--accent);color:#fff;background:rgba(0,217,255,.08)}
+.chip b{color:#fff}
+.chip span{color:var(--muted);font-weight:400}
+.login-note{margin-top:22px;font-size:11.5px;color:var(--muted-2);line-height:1.7;border-top:1px solid var(--line);padding-top:14px}
+
+/* ---------- APP SHELL ---------- */
+#app{position:relative;z-index:1;display:flex;flex-direction:column;height:100vh}
+.topbar{display:flex;align-items:center;gap:16px;padding:12px 20px;border-bottom:1px solid var(--line);background:rgba(10,22,40,.65);backdrop-filter:blur(8px);flex:none}
+.logo{font-family:var(--serif);font-weight:900;font-size:17px;white-space:nowrap}
+.logo em{color:var(--accent);font-style:normal}
+.logo .tag{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--gold);display:block;font-weight:700;margin-top:-2px}
+.tabs{display:flex;gap:4px;margin-left:8px}
+.tab{padding:8px 14px;border-radius:9px;font-size:13.5px;font-weight:700;color:var(--muted);transition:.15s}
+.tab:hover{color:#fff;background:rgba(255,255,255,.05)}
+.tab.active{color:#04222b;background:var(--accent)}
+.tab .badge{display:inline-block;min-width:18px;text-align:center;font-family:var(--mono);font-size:11px;margin-left:5px;padding:0 5px;border-radius:8px;background:rgba(0,0,0,.18)}
+.tab:not(.active) .badge{background:rgba(255,255,255,.08);color:var(--muted)}
+.spacer{flex:1}
+.who{display:flex;align-items:center;gap:10px;font-size:13px}
+.avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent-dim),var(--primary-3));display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:13px;border:1px solid var(--line-2)}
+.who .nm{font-weight:700}
+.who .rl{font-size:11px;color:var(--muted)}
+.persist-warn{font-size:11px;color:var(--warn);border:1px solid rgba(255,107,71,.4);background:rgba(255,107,71,.08);padding:4px 9px;border-radius:8px}
+
+.main{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.toolbar{display:flex;align-items:center;gap:10px;padding:12px 20px;flex:none;flex-wrap:wrap}
+.search{flex:1;min-width:180px;max-width:340px;display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(255,255,255,.04);border:1px solid var(--line-2);border-radius:9px}
+.search input{flex:1;background:none;border:none;color:#fff}
+.search input::placeholder{color:var(--muted-2)}
+.toolbar select{padding:8px 10px;background:var(--primary-2);border:1px solid var(--line-2);border-radius:9px;color:#dfe5ee}
+.view-wrap{flex:1;overflow:auto;padding:4px 20px 24px}
+
+/* ---------- BOARD ---------- */
+.board{display:flex;gap:0;align-items:flex-start;min-height:100%;padding-bottom:8px}
+.col{flex:none;width:252px;display:flex;flex-direction:column;background:rgba(255,255,255,.018);border:1px solid var(--line);border-radius:14px;max-height:calc(100vh - 150px)}
+.col-head{padding:12px 13px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:9px}
+.col-num{width:24px;height:24px;flex:none;border-radius:7px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:12px;background:rgba(0,217,255,.12);color:var(--accent);border:1px solid rgba(0,217,255,.3)}
+.col.ongoing .col-num{background:rgba(0,200,150,.12);color:var(--success);border-color:rgba(0,200,150,.3)}
+.col-title{font-weight:700;font-size:13px;line-height:1.25}
+.col-count{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--muted)}
+.col-body{padding:10px;overflow-y:auto;display:flex;flex-direction:column;gap:9px}
+.col-body:empty::after{content:"暂无";display:block;text-align:center;color:var(--muted-2);font-size:12px;padding:14px 0}
+
+.gate{flex:none;width:92px;align-self:stretch;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:6px 4px;position:relative}
+.gate::before{content:"";position:absolute;top:48px;bottom:18px;width:0;border-left:1.5px dashed rgba(255,182,39,.45)}
+.gate-pill{position:relative;z-index:1;font-family:var(--serif);font-weight:700;font-size:13px;color:#2a1c00;background:linear-gradient(180deg,var(--gold),var(--gold-dim));border-radius:999px;padding:4px 12px;box-shadow:0 4px 14px rgba(255,182,39,.25)}
+.gate-cond{font-size:10px;line-height:1.5;color:var(--gold);text-align:center;opacity:.9}
+.gate-cond span{display:block;white-space:nowrap}
+.gate-arrow{color:var(--gold-dim);font-size:13px}
+
+.card{background:linear-gradient(180deg,rgba(29,51,84,.55),rgba(21,40,65,.5));border:1px solid var(--line-2);border-radius:11px;padding:11px 12px;transition:.15s;position:relative}
+.card:hover{border-color:var(--accent-dim);transform:translateY(-1px)}
+.card .cardname{font-weight:700;font-size:14px;cursor:pointer;padding-right:4px}
+.card .cardname:hover{color:var(--accent)}
+.card-meta{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0}
+.pill{font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid var(--line-2);color:var(--muted);white-space:nowrap}
+.pill.tier{color:#cdd5e0}
+.pill.tier.金牌代理{color:var(--gold);border-color:rgba(255,182,39,.4)}
+.pill.tier.钻石代理{color:#bfe9ff;border-color:rgba(0,217,255,.4)}
+.pill.code{font-family:var(--mono);color:var(--accent);border-color:rgba(0,217,255,.3)}
+.pill.st-活跃{color:var(--success);border-color:rgba(0,200,150,.4)}
+.pill.st-暂停{color:var(--pause);border-color:rgba(224,169,60,.4)}
+.pill.st-退出{color:var(--muted-2)}
+.card .cardline{font-size:11.5px;color:var(--muted);display:flex;justify-content:space-between;gap:6px}
+.card .cardline b{color:#cdd5e0;font-family:var(--mono);font-weight:500}
+.card-foot{display:flex;align-items:center;gap:6px;margin-top:9px;padding-top:9px;border-top:1px solid var(--line)}
+.card-owner{font-size:11px;color:var(--muted-2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.passbtn{font-size:11.5px;font-weight:700;color:var(--gold);padding:3px 9px;border-radius:7px;border:1px solid rgba(255,182,39,.35);background:rgba(255,182,39,.07);white-space:nowrap}
+.passbtn:hover{background:rgba(255,182,39,.16)}
+
+/* ---------- LIST ---------- */
+table.grid{width:100%;border-collapse:collapse;font-size:13px}
+table.grid th{text-align:left;padding:10px 12px;color:var(--accent);font-size:12px;font-weight:700;border-bottom:1px solid var(--line-2);position:sticky;top:0;background:#0c1c33;cursor:pointer;white-space:nowrap}
+table.grid th:hover{color:#fff}
+table.grid td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+table.grid tr:hover td{background:rgba(255,255,255,.025)}
+table.grid .nm{font-weight:700;cursor:pointer}
+table.grid .nm:hover{color:var(--accent)}
+.stagebadge{font-family:var(--mono);font-size:11px;font-weight:700;padding:2px 8px;border-radius:7px;background:rgba(0,217,255,.1);color:var(--accent);white-space:nowrap}
+.stagebadge.ong{background:rgba(0,200,150,.1);color:var(--success)}
+
+/* ---------- AUDIT ---------- */
+.audit-list{display:flex;flex-direction:column;gap:0;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.audit-row{display:grid;grid-template-columns:150px 130px 1fr;gap:14px;padding:11px 16px;border-bottom:1px solid var(--line);align-items:baseline;font-size:13px}
+.audit-row:last-child{border-bottom:none}
+.audit-row:hover{background:rgba(255,255,255,.02)}
+.audit-time{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+.audit-user{display:flex;align-items:center;gap:7px}
+.audit-user .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex:none}
+.audit-user b{font-weight:700;font-size:12.5px}
+.audit-act .tagtype{font-family:var(--mono);font-size:10px;font-weight:700;padding:1px 7px;border-radius:6px;margin-right:8px;text-transform:uppercase}
+.tt-create{background:rgba(0,200,150,.14);color:var(--success)}
+.tt-gate{background:rgba(255,182,39,.16);color:var(--gold)}
+.tt-edit{background:rgba(0,217,255,.12);color:var(--accent)}
+.tt-status{background:rgba(224,169,60,.16);color:var(--pause)}
+.tt-delete{background:rgba(255,107,71,.16);color:#ffb3a1}
+.audit-act .rec{font-weight:700}
+.audit-act .det{color:var(--muted);font-size:12.5px}
+.audit-act .det .chg{color:#cdd5e0}
+.audit-act .det s{color:var(--muted-2)}
+
+/* ---------- REFERENCE ---------- */
+.ref-h{font-family:var(--serif);font-weight:700;font-size:18px;margin:22px 0 12px}
+.ref-h:first-child{margin-top:4px}
+.ref-h .em{color:var(--gold)}
+.reftable{width:100%;border-collapse:collapse;font-size:13px;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.reftable th{background:#0c1c33;color:var(--accent);text-align:left;padding:9px 12px;font-size:12px}
+.reftable td{padding:9px 12px;border-top:1px solid var(--line)}
+.reftable td.k{font-weight:700}
+.flowline{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:6px 0 4px}
+.flowstage{display:flex;align-items:center;gap:7px;background:rgba(0,217,255,.07);border:1px solid rgba(0,217,255,.22);border-radius:10px;padding:7px 12px}
+.flowstage .n{font-family:var(--mono);font-weight:700;color:var(--accent);font-size:12px}
+.flowgate{font-family:var(--serif);font-size:12px;color:var(--gold);background:rgba(255,182,39,.08);border:1px dashed rgba(255,182,39,.4);border-radius:999px;padding:4px 11px;white-space:nowrap}
+
+/* ---------- MODAL ---------- */
+.overlay{position:fixed;inset:0;z-index:60;background:rgba(4,10,20,.66);backdrop-filter:blur(3px);display:flex;align-items:flex-start;justify-content:center;padding:34px 16px;overflow-y:auto}
+.modal{position:relative;width:100%;max-width:720px;background:linear-gradient(180deg,#13243c,#0d1a2c);border:1px solid var(--line-2);border-radius:16px;box-shadow:0 30px 80px rgba(0,0,0,.55)}
+.modal.narrow{max-width:480px}
+.modal-head{display:flex;align-items:flex-start;gap:12px;padding:18px 22px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#13243c;border-radius:16px 16px 0 0;z-index:2}
+.modal-head h3{font-family:var(--serif);font-weight:700;font-size:19px}
+.modal-head .sub{font-size:12px;color:var(--muted);margin-top:2px}
+.modal-x{margin-left:auto;font-size:20px;color:var(--muted);width:30px;height:30px;border-radius:8px;flex:none}
+.modal-x:hover{background:rgba(255,255,255,.08);color:#fff}
+.modal-body{padding:18px 22px}
+.modal-foot{display:flex;align-items:center;gap:10px;padding:14px 22px;border-top:1px solid var(--line);position:sticky;bottom:0;background:#0d1a2c;border-radius:0 0 16px 16px}
+
+fieldset{border:1px solid var(--line);border-radius:11px;padding:14px 14px 4px;margin-bottom:14px}
+fieldset.current{border-color:rgba(0,217,255,.35);box-shadow:0 0 0 1px rgba(0,217,255,.12) inset}
+legend{font-size:12px;font-weight:700;color:var(--accent);padding:0 8px}
+legend.gold{color:var(--gold)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.field{margin-bottom:11px;display:flex;flex-direction:column;gap:5px}
+.field.wide{grid-column:1 / -1}
+.field label{font-size:11.5px;color:var(--muted);font-weight:700}
+.field input,.field select,.field textarea{padding:9px 11px;background:rgba(255,255,255,.04);border:1px solid var(--line-2);border-radius:8px;color:#fff;width:100%}
+.field textarea{resize:vertical;min-height:60px}
+.field .ro{font-family:var(--mono);color:var(--accent);font-size:13px;padding:6px 0}
+
+/* gate modal checklist */
+.gatehead{text-align:center;padding:4px 0 14px}
+.gatehead .门{font-family:var(--serif);font-weight:900;font-size:30px;color:var(--gold)}
+.gatehead .arrow{font-size:13px;color:var(--muted);margin-top:4px}
+.gatehead .arrow b{color:#fff}
+.checkitem{display:flex;align-items:center;gap:11px;padding:12px 14px;border:1px solid var(--line-2);border-radius:10px;margin-bottom:9px;cursor:pointer;transition:.15s}
+.checkitem:hover{border-color:var(--accent-dim)}
+.checkitem.on{border-color:var(--success);background:rgba(0,200,150,.07)}
+.checkitem .box{width:21px;height:21px;flex:none;border-radius:6px;border:1.5px solid var(--line-2);display:flex;align-items:center;justify-content:center;font-size:13px;color:#04222b}
+.checkitem.on .box{background:var(--success);border-color:var(--success)}
+.checkitem .lbl{font-weight:700;font-size:14px}
+.gate-remark{width:100%;padding:9px 11px;background:rgba(255,255,255,.04);border:1px solid var(--line-2);border-radius:8px;color:#fff;margin-top:6px}
+.gatewarn{font-size:12px;color:var(--warn);margin-top:8px;display:none}
+
+/* history block in record modal */
+.hist{margin-top:6px;border-top:1px solid var(--line);padding-top:12px}
+.hist h4{font-size:12px;color:var(--muted);font-weight:700;margin-bottom:9px;letter-spacing:.04em}
+.hist-item{font-size:12px;color:var(--muted);padding:5px 0;display:flex;gap:9px;border-bottom:1px dashed var(--line)}
+.hist-item:last-child{border-bottom:none}
+.hist-item .t{font-family:var(--mono);font-size:10.5px;color:var(--muted-2);flex:none;width:96px}
+.hist-item .x{color:#cdd5e0}
+
+.empty{text-align:center;padding:60px 20px;color:var(--muted)}
+.empty .big{font-family:var(--serif);font-size:20px;color:#cdd5e0;margin-bottom:8px}
+
+/* toast */
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);z-index:80;background:#0d2230;border:1px solid var(--accent-dim);color:#dffaff;padding:11px 20px;border-radius:10px;font-size:13px;font-weight:700;opacity:0;transition:.25s;box-shadow:0 10px 30px rgba(0,0,0,.4);pointer-events:none}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@media(max-width:640px){
+  .tabs .tab{padding:8px 9px;font-size:12px}
+  .logo .tag{display:none}
+  .who .rl{display:none}
+  .grid2{grid-template-columns:1fr}
+  .audit-row{grid-template-columns:1fr;gap:4px}
+}
+</style>
+</head>
+<body>
+
+<!-- ===================== LOGIN ===================== -->
+<div id="login">
+  <div class="login-card">
+    <div class="brand-eyebrow">SPARKCLAW · 渠道招商</div>
+    <h1>运营记录<em>系统</em></h1>
+    <div class="sub">按招商手册六阶段 + 过门管理 · 所有修改自动留痕</div>
+    <div class="fieldlabel">姓名</div>
+    <input type="text" id="loginInput" placeholder="输入姓名,如:陈磊" autocomplete="off">
+    <div class="fieldlabel" style="margin-top:14px">密码</div>
+    <input type="password" id="loginPwd" placeholder="请输入密码" autocomplete="off">
+    <div class="login-err" id="loginErr"></div>
+    <button class="btn primary" id="loginBtn" style="width:100%;margin-top:16px;justify-content:center;padding:12px;font-size:15px">登录</button>
+    <div class="fieldlabel" style="margin-top:18px">快速选择姓名</div>
+    <div class="chips" id="loginChips"></div>
+    <div class="login-note">
+      登录身份用于记录"谁在什么时候改了什么(修改留痕)"。<br>
+      面向运营、销售与渠道同学 — 点姓名快速填入,再输入密码登录。
+    </div>
+  </div>
+</div>
+
+<!-- ===================== APP ===================== -->
+<div id="app" class="hidden">
+  <div class="topbar">
+    <div class="logo">SparkClaw<em>·</em>运营记录<span class="tag">渠道招商 OPS</span></div>
+    <div class="tabs" id="tabs">
+      <button class="tab active" data-view="board">看板<span class="badge" id="tb-board">0</span></button>
+      <button class="tab" data-view="list">列表<span class="badge" id="tb-list">0</span></button>
+      <button class="tab" data-view="audit">留痕<span class="badge" id="tb-audit">0</span></button>
+      <button class="tab" data-view="ref">速查</button>
+    </div>
+    <div class="spacer"></div>
+    <span class="persist-warn hidden" id="persistWarn">预览模式 · 数据暂不持久化</span>
+    <button class="btn sm ghost" id="exportBtn" title="导出备份">导出</button>
+    <button class="btn sm ghost" id="importBtn" title="导入备份">导入</button>
+    <input type="file" id="importFile" accept="application/json" class="hidden">
+    <div class="who">
+      <div class="avatar" id="meAvatar">?</div>
+      <div><div class="nm" id="meName">—</div><div class="rl" id="meRole">—</div></div>
+    </div>
+    <button class="btn sm ghost" id="logoutBtn">退出</button>
+  </div>
+
+  <div class="main">
+    <div class="toolbar">
+      <button class="btn primary" id="newBtn">+ 新建代理</button>
+      <div class="search"><span style="color:var(--muted-2)">🔍</span><input type="text" id="searchInput" placeholder="搜索公司 / 联系人 / 渠道码 / 对接人"></div>
+      <select id="filterOwner"><option value="">全部对接人</option></select>
+      <select id="filterTier"><option value="">全部档位</option></select>
+    </div>
+    <div class="view-wrap">
+      <div id="view-board"></div>
+      <div id="view-list" class="hidden"></div>
+      <div id="view-audit" class="hidden"></div>
+      <div id="view-ref" class="hidden"></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+"use strict";
+
+/* ---------- storage (localStorage with in-memory fallback) ---------- */
+const Store = (() => {
+  let mem = {}, ok = false;
+  try { localStorage.setItem("__sc_t","1"); localStorage.removeItem("__sc_t"); ok = true; } catch(e){ ok = false; }
+  return {
+    persistent: ok,
+    get(k){ try{ if(ok){ const v=localStorage.getItem(k); return v==null?null:JSON.parse(v);} }catch(e){} return (k in mem)?mem[k]:null; },
+    set(k,v){ try{ if(ok){ localStorage.setItem(k,JSON.stringify(v)); return; } }catch(e){} mem[k]=v; }
+  };
+})();
+const K = { REC:"sc_ops_records", AUD:"sc_ops_audit", SES:"sc_ops_session" };
+
+/* ---------- seed users (from RACI table) ---------- */
+// 账号配置(数据驱动,便于增减/调整)。type:'internal'=运营/销售/内部;预留 'partner'=渠道商,
+// 未来扩展为"渠道商自助"系统时,partner 账号将只看到自己名下的记录(见 visibleRecords)。
+const APP_VER = "1.1";
+const USERS = [
+  {name:"董慧智", role:"负责人",      type:"internal", pwd:"888888"},
+  {name:"陈磊",   role:"运营 / 销售", type:"internal", pwd:"888888"},
+  {name:"贺笑屹", role:"产品",        type:"internal", pwd:"888888"},
+  {name:"赵芊玥", role:"运营 / 销售", type:"internal", pwd:"888888"},
+  {name:"刘春雷", role:"运营 / 销售", type:"internal", pwd:"888888"},
+  {name:"黄铮",   role:"运营 / 销售", type:"internal", pwd:"888888"},
+  {name:"杨萍",   role:"运营 / 销售", type:"internal", pwd:"888888"},
+  {name:"刘刘",   role:"运营 / 销售", type:"internal", pwd:"888888"},
+];
+
+/* ---------- stages & gates (from SOP) ---------- */
+const TIERS = ["普通代理","银牌代理","金牌代理","钻石代理"];
+const STAGES = [
+  {n:1, name:"线索接触",            gate:["真实意向","具备渠道能力"]},
+  {n:2, name:"资质评估 + 报备",     gate:["评估通过","报备无冲突"]},
+  {n:3, name:"政策沟通 + 方案确认", gate:["确认档位","季度目标","接受政策"]},
+  {n:4, name:"签约 + 付款",         gate:["合同生效","款项到账"]},
+  {n:5, name:"代理开通 + 赋能",     gate:["渠道码生效","培训完成","物料齐全"]},
+  {n:6, name:"引流推广 + 成交结算", gate:["首个码成交","稳定引流/结算"]},
+];
+const ONGOING = 7; // 持续运营
+function stageName(n){ return n===ONGOING ? "持续运营" : (STAGES[n-1]?STAGES[n-1].name:"—"); }
+
+/* ---------- field schema (登记台账 per stage) ---------- */
+const FIELD_GROUPS = [
+  {stage:0, title:"基础信息", fields:[
+    {k:"name",label:"公司 / 姓名",type:"text",req:true,wide:true},
+    {k:"contact",label:"联系人",type:"text"},
+    {k:"phone",label:"联系方式",type:"text"},
+    {k:"region",label:"地区",type:"text"},
+    {k:"source",label:"来源",type:"text"},
+    {k:"referrer",label:"推荐人(归属)",type:"text"},
+    {k:"owner",label:"对接人",type:"text"},
+  ]},
+  {stage:1, title:"阶段一 · 线索接触", fields:[
+    {k:"firstContact",label:"首次接触日期",type:"date"},
+    {k:"intentTier",label:"意向档位",type:"select",opts:["",...TIERS]},
+  ]},
+  {stage:2, title:"阶段二 · 资质评估 + 报备", fields:[
+    {k:"profile",label:"渠道画像",type:"textarea",wide:true},
+    {k:"evalConclusion",label:"评估结论",type:"text",wide:true},
+    {k:"suggestTier",label:"建议档位",type:"select",opts:["",...TIERS]},
+    {k:"filingStatus",label:"报备状态",type:"select",opts:["","待报备","已报备","有冲突"]},
+    {k:"filingExpiry",label:"报备有效期",type:"date"},
+    {k:"conflictCheck",label:"冲突核查",type:"text"},
+  ]},
+  {stage:3, title:"阶段三 · 政策沟通 + 方案确认", fields:[
+    {k:"commLog",label:"沟通记录",type:"textarea",wide:true},
+    {k:"confirmTier",label:"确认档位",type:"select",opts:["",...TIERS]},
+    {k:"quarterTarget",label:"季度目标(台)",type:"number"},
+    {k:"expectDeposit",label:"预计定金 / 货款",type:"text"},
+  ]},
+  {stage:4, title:"阶段四 · 签约 + 付款", fields:[
+    {k:"contractNo",label:"合同编号",type:"text"},
+    {k:"signDate",label:"签约日期",type:"date"},
+    {k:"deposit",label:"定金 (¥)",type:"number"},
+    {k:"quotaTotal",label:"提货权益额度 (¥)",type:"number"},
+    {k:"channelCode",label:"专属渠道码",type:"text"},
+    {k:"receiptNo",label:"收款凭证号",type:"text"},
+    {k:"financeConfirm",label:"财务确认",type:"select",opts:["","否","是"]},
+  ]},
+  {stage:5, title:"阶段五 · 代理开通 + 赋能", fields:[
+    {k:"codeActive",label:"渠道码生效",type:"select",opts:["","否","是"]},
+    {k:"backendReady",label:"后台开通",type:"select",opts:["","否","是"]},
+    {k:"trainDone",label:"培训完成",type:"select",opts:["","否","是"]},
+    {k:"kitSent",label:"物料发放",type:"select",opts:["","否","是"]},
+  ]},
+  {stage:6, title:"阶段六 · 引流推广 + 成交结算", fields:[
+    {k:"firstDealDate",label:"首单日期",type:"date"},
+    {k:"dealsCount",label:"累计成交(按码,台)",type:"number"},
+    {k:"quotaUsed",label:"提货权益核销 (¥)",type:"number"},
+    {k:"pointsUsed",label:"积分消耗",type:"number"},
+    {k:"commissionSettled",label:"提成结算 (¥)",type:"number"},
+    {k:"referral",label:"复购 / 转介绍",type:"text"},
+    {k:"tierChange",label:"升降级",type:"text"},
+    {k:"status",label:"状态",type:"select",opts:["活跃","暂停","退出"]},
+  ]},
+];
+const LABELS = {}; FIELD_GROUPS.forEach(g=>g.fields.forEach(f=>LABELS[f.k]=f.label));
+
+/* ---------- state ---------- */
+let me = null;
+let records = Store.get(K.REC);
+let audit = Store.get(K.AUD) || [];
+let curView = "board";
+let editingId = null, gateId = null, gateChecks = {};
+
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s);
+const el = (t,c,h)=>{const e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;};
+const esc = s => (s==null?"":String(s)).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+const uid = () => "R"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+function now(){ return new Date().toISOString(); }
+function fmt(iso){ if(!iso) return ""; const d=new Date(iso); const p=n=>String(n).padStart(2,"0"); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`; }
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove("show"),2200); }
+function save(){ Store.set(K.REC,records); Store.set(K.AUD,audit); }
+function logAudit(type, rec, summary, details){
+  audit.push({ts:now(), uid:me.id, uname:me.name, urole:me.role, rid:rec.id, rname:rec.name||"(未命名)", type, summary:summary||"", details:details||[]});
+}
+
+/* ---------- seed demo (first run only) ---------- */
+function seedDemo(){
+  const base = (o)=>Object.assign({id:uid(),stage:1,status:"活跃",createdAt:now(),createdBy:"系统(示例)",updatedAt:now()},o);
+  records = [
+    base({name:"示例 · 蓉城数码", contact:"王磊", phone:"138••••2210", region:"成都", source:"老客户推荐", referrer:"李航", owner:"陈磊", stage:1, intentTier:"银牌代理", firstContact:"2026-05-20"}),
+    base({name:"示例 · 江南智选", contact:"周敏", phone:"139••••7788", region:"南京", source:"展会", owner:"黄铮", stage:4, confirmTier:"金牌代理", quarterTarget:50, contractNo:"HT-2026-018", signDate:"2026-05-28", deposit:20000, quotaTotal:100000, channelCode:"SC-JN-7788", financeConfirm:"是"}),
+    base({name:"示例 · 湾区云联", contact:"陈先生", phone:"137••••3030", region:"深圳", owner:"杨萍", stage:6, confirmTier:"钻石代理", channelCode:"SC-WQ-3030", quotaTotal:250000, codeActive:"是", backendReady:"是", trainDone:"是", kitSent:"是", firstDealDate:"2026-06-02", dealsCount:12, quotaUsed:42000, commissionSettled:8400, status:"活跃"}),
+  ];
+  audit = [];
+  records.forEach(r=>audit.push({ts:r.createdAt,uid:"系统",uname:"系统",urole:"",rid:r.id,rname:r.name,type:"create",summary:"导入示例记录",details:[]}));
+  save();
+}
+
+/* ============================================================= LOGIN */
+function renderLoginChips(){
+  const box=$("#loginChips"); box.innerHTML="";
+  USERS.forEach(u=>{
+    const c=el("button","chip",`<b>${esc(u.name)}</b> <span>${esc(u.role)}</span>`);
+    c.onclick=()=>{ $("#loginInput").value=u.name; $("#loginErr").textContent=""; $("#loginPwd").focus(); };
+    box.appendChild(c);
+  });
+}
+function showLoginErr(m){ $("#loginErr").textContent=m||""; }
+function attemptLogin(){
+  const name=($("#loginInput").value||"").trim();
+  const pwd=$("#loginPwd").value||"";
+  if(!name){ showLoginErr("请输入姓名"); $("#loginInput").focus(); return; }
+  const u=USERS.find(x=>x.name===name);
+  if(!u){ showLoginErr("未找到「"+name+"」 — 请确认姓名,或联系管理员开通账号"); return; }
+  if(pwd!==u.pwd){ showLoginErr("密码不正确"); $("#loginPwd").focus(); return; }
+  enterApp({name:u.name, role:u.role, type:u.type||"internal"});
+}
+function enterApp(user){
+  me=user; Store.set(K.SES, me); Store.set("sc_ops_ver", APP_VER);
+  if(records===null) seedDemo();
+  $("#login").classList.add("hidden");
+  $("#app").classList.remove("hidden");
+  $("#persistWarn").classList.toggle("hidden", Store.persistent);
+  $("#meAvatar").textContent=me.name.slice(0,1);
+  $("#meName").textContent=me.name;
+  $("#meRole").textContent=me.role;
+  renderAll();
+  toast("已登录:"+me.name);
+}
+function logout(){ Store.set(K.SES,null); me=null; $("#app").classList.add("hidden"); $("#login").classList.remove("hidden"); $("#loginInput").value=""; $("#loginPwd").value=""; showLoginErr(""); }
+
+/* 可见记录范围(可复用接口):内部运营/销售见全部;渠道商(partner)仅见自己名下/创建的记录 */
+function visibleRecords(){
+  if(me && me.type==="partner") return records.filter(r=>r.owner===me.name||r.createdBy===me.name);
+  return records;
+}
+
+/* ============================================================= FILTERS */
+function activeFilters(){ return {q:$("#searchInput").value.trim().toLowerCase(), owner:$("#filterOwner").value, tier:$("#filterTier").value}; }
+function matchFilter(r){
+  const f=activeFilters();
+  if(f.owner && (r.owner||"")!==f.owner) return false;
+  const tier=r.confirmTier||r.suggestTier||r.intentTier||"";
+  if(f.tier && tier!==f.tier) return false;
+  if(f.q){
+    const hay=[r.name,r.contact,r.phone,r.channelCode,r.owner,r.region,r.contractNo].join(" ").toLowerCase();
+    if(!hay.includes(f.q)) return false;
+  }
+  return true;
+}
+function refreshFilterOptions(){
+  const owners=[...new Set(visibleRecords().map(r=>r.owner).filter(Boolean))].sort();
+  const os=$("#filterOwner"); const cur=os.value;
+  os.innerHTML='<option value="">全部对接人</option>'+owners.map(o=>`<option>${esc(o)}</option>`).join("");
+  os.value=cur;
+  const ts=$("#filterTier"); if(ts.options.length<=1){ ts.innerHTML='<option value="">全部档位</option>'+TIERS.map(t=>`<option>${esc(t)}</option>`).join(""); }
+}
+function recTier(r){ return r.confirmTier||r.suggestTier||r.intentTier||""; }
+
+/* ============================================================= BOARD */
+function renderBoard(){
+  const wrap=$("#view-board"); wrap.innerHTML="";
+  const board=el("div","board");
+  const cols = STAGES.map(s=>s.n).concat([ONGOING]);
+  cols.forEach((n,i)=>{
+    const stage = n===ONGOING ? {n:ONGOING,name:"持续运营"} : STAGES[n-1];
+    const items = visibleRecords().filter(r=>r.stage===n && matchFilter(r));
+    const col=el("div","col"+(n===ONGOING?" ongoing":""));
+    col.innerHTML=`<div class="col-head"><span class="col-num">${n===ONGOING?"∞":n}</span><span class="col-title">${esc(stage.name)}</span><span class="col-count">${items.length}</span></div>`;
+    const body=el("div","col-body");
+    items.sort((a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||""));
+    items.forEach(r=>body.appendChild(cardEl(r)));
+    col.appendChild(body);
+    board.appendChild(col);
+    // gate lane between this column and next (only between stages, and from 6 -> 持续运营)
+    if(i<cols.length-1){
+      const fromStage = STAGES[n-1] || STAGES[STAGES.length-1];
+      board.appendChild(gateLane(fromStage));
+    }
+  });
+  wrap.appendChild(board);
+}
+function gateLane(stage){
+  const g=el("div","gate");
+  g.innerHTML = `<div class="gate-pill">门</div><div class="gate-cond">${stage.gate.map(c=>`<span>${esc(c)}</span>`).join("")}</div><div class="gate-arrow">▸</div>`;
+  return g;
+}
+function cardEl(r){
+  const c=el("div","card");
+  const tier=recTier(r);
+  let metas=`<span class="pill tier ${esc(tier)}">${esc(tier||"未定档")}</span>`;
+  if(r.channelCode) metas+=`<span class="pill code">${esc(r.channelCode)}</span>`;
+  if(r.stage===ONGOING) metas+=`<span class="pill st-${esc(r.status||"活跃")}">${esc(r.status||"活跃")}</span>`;
+  let lines="";
+  if(r.region||r.phone) lines+=`<div class="cardline"><span>${esc(r.region||"")}</span><b>${esc(r.phone||"")}</b></div>`;
+  if(r.stage>=4 && r.quotaTotal){ const bal=(r.quotaTotal||0)-(r.quotaUsed||0); lines+=`<div class="cardline"><span>提货权益余</span><b>¥${bal.toLocaleString()}</b></div>`; }
+  if(r.stage>=6 && r.dealsCount) lines+=`<div class="cardline"><span>累计成交</span><b>${r.dealsCount} 台</b></div>`;
+  const canPass = r.stage!==ONGOING;
+  c.innerHTML=`
+    <div class="cardname" data-open="${r.id}">${esc(r.name||"(未命名)")}</div>
+    <div class="card-meta">${metas}</div>
+    ${lines}
+    <div class="card-foot">
+      <span class="card-owner">${esc(r.owner||"未分配")}</span>
+      ${canPass?`<button class="passbtn" data-gate="${r.id}">过门 →</button>`:`<span style="font-size:11px;color:var(--success)">已运营</span>`}
+    </div>`;
+  return c;
+}
+
+/* ============================================================= LIST */
+let sortKey="updatedAt", sortDir=-1;
+function renderList(){
+  const wrap=$("#view-list"); wrap.innerHTML="";
+  let rows=visibleRecords().filter(matchFilter);
+  rows.sort((a,b)=>{ let x=a[sortKey]??"", y=b[sortKey]??""; if(sortKey==="stage"){x=a.stage;y=b.stage;} return (x>y?1:x<y?-1:0)*sortDir; });
+  const cols=[["name","公司 / 姓名"],["stage","阶段"],["tier","档位"],["owner","对接人"],["channelCode","渠道码"],["region","地区"],["updatedAt","最近更新"]];
+  const t=el("table","grid");
+  t.innerHTML=`<thead><tr>${cols.map(c=>`<th data-sort="${c[0]}">${c[1]}${sortKey===c[0]?(sortDir<0?" ↓":" ↑"):""}</th>`).join("")}</tr></thead>`;
+  const tb=el("tbody");
+  if(!rows.length){ tb.innerHTML=`<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:30px">无匹配记录</td></tr>`; }
+  rows.forEach(r=>{
+    const ong=r.stage===ONGOING;
+    const tr=el("tr");
+    tr.innerHTML=`<td class="nm" data-open="${r.id}">${esc(r.name||"(未命名)")}</td>
+      <td><span class="stagebadge ${ong?"ong":""}">${ong?"持续运营":(r.stage+" "+stageName(r.stage))}</span></td>
+      <td>${esc(recTier(r)||"—")}</td>
+      <td>${esc(r.owner||"—")}</td>
+      <td class="mono" style="color:var(--accent)">${esc(r.channelCode||"—")}</td>
+      <td>${esc(r.region||"—")}</td>
+      <td class="mono" style="font-size:11.5px;color:var(--muted)">${fmt(r.updatedAt)}</td>`;
+    tb.appendChild(tr);
+  });
+  t.appendChild(tb); wrap.appendChild(t);
+}
+
+/* ============================================================= AUDIT */
+function renderAudit(){
+  const wrap=$("#view-audit"); wrap.innerHTML="";
+  const f=activeFilters();
+  let rows=audit.slice().reverse();
+  if(f.q) rows=rows.filter(a=>[a.uname,a.rname,a.summary,JSON.stringify(a.details)].join(" ").toLowerCase().includes(f.q));
+  if(!rows.length){ wrap.innerHTML=`<div class="empty"><div class="big">暂无留痕</div>新建或修改记录后,这里会记录每一次变更:谁、何时、改了什么。</div>`; return; }
+  const list=el("div","audit-list");
+  rows.slice(0,400).forEach(a=>{
+    let det="";
+    if(a.type==="edit" && a.details && a.details.length){
+      det=a.details.map(d=>`<span class="chg">${esc(d.label)}</span>:<s>${esc(d.from||"空")}</s> → ${esc(d.to||"空")}`).join("　·　");
+    } else { det=esc(a.summary||""); }
+    const row=el("div","audit-row");
+    row.innerHTML=`
+      <div class="audit-time">${fmt(a.ts)}</div>
+      <div class="audit-user"><span class="dot"></span><b>${esc(a.uname)}</b></div>
+      <div class="audit-act"><span class="tagtype tt-${a.type}">${a.type}</span><span class="rec">${esc(a.rname)}</span> <span class="det">${det}</span></div>`;
+    list.appendChild(row);
+  });
+  wrap.appendChild(list);
+}
+
+/* ============================================================= REFERENCE */
+function renderRef(){
+  const wrap=$("#view-ref");
+  if(wrap.dataset.done) return; wrap.dataset.done="1";
+  let flow=`<div class="flowline">`;
+  STAGES.forEach((s,i)=>{
+    flow+=`<div class="flowstage"><span class="n">${s.n}</span>${esc(s.name)}</div>`;
+    flow+=`<span class="flowgate">门:${s.gate.join(" + ")}</span>`;
+  });
+  flow+=`<div class="flowstage" style="background:rgba(0,200,150,.07);border-color:rgba(0,200,150,.22)"><span class="n" style="color:var(--success)">∞</span>持续运营</div></div>`;
+
+  const tierRows=[
+    ["普通代理","—","—","—","¥50","¥200","¥600"],
+    ["银牌代理","¥6,000","¥30,000","15 台","¥100","¥400","¥1,000"],
+    ["金牌代理","¥20,000","¥100,000","50 台","¥125","¥500","¥1,500"],
+    ["钻石代理","¥50,000","¥250,000","100 台","¥150","¥600","¥2,000"],
+  ];
+  const statusRows=[
+    ["01–06","对应六个阶段(线索接触 → 引流推广+成交结算)"],
+    ["持续运营","已动销,进入维护 / 升降级周期"],
+    ["状态:活跃","正常动销中"],
+    ["状态:暂停","违规暂停结算 / 临时停用"],
+    ["状态:退出","已按退出机制结算并停用渠道码"],
+  ];
+  wrap.innerHTML=`
+    <div class="ref-h"><span class="em">流程</span>与门(过门条件)</div>${flow}
+    <div class="ref-h"><span class="em">四级代理</span>体系 · 提成速查(每台)</div>
+    <table class="reftable"><thead><tr><th>档位</th><th>定金</th><th>提货权益</th><th>季度承诺</th><th>轻爪¥999</th><th>锐爪¥1999</th><th>巨鳌¥5999</th></tr></thead><tbody>
+    ${tierRows.map(r=>`<tr><td class="k">${r[0]}</td>${r.slice(1).map(c=>`<td class="mono">${c}</td>`).join("")}</tr>`).join("")}
+    </tbody></table>
+    <p style="font-size:12px;color:var(--muted);margin-top:10px">定金 = 季度货款承诺的 20%(提货权益 ≈ 定金×5)。结算:成交后 T+30 无退货入账、每月 25 日–月末提现。季度未达扣 5% 定金;连续两季未达自动降级 + 扣 10%。</p>
+    <div class="ref-h"><span class="em">阶段</span>与状态码</div>
+    <table class="reftable"><thead><tr><th>代码</th><th>含义</th></tr></thead><tbody>
+    ${statusRows.map(r=>`<tr><td class="k mono">${r[0]}</td><td>${r[1]}</td></tr>`).join("")}
+    </tbody></table>`;
+}
+
+/* ============================================================= RECORD MODAL */
+function openRecord(id){
+  editingId = id;
+  const r = id ? records.find(x=>x.id===id) : {owner:(me?me.name:"")};
+  const isNew = !id;
+  const ov=el("div","overlay");
+  ov.id="recordOverlay";
+  let groups="";
+  FIELD_GROUPS.forEach(g=>{
+    const isCur = !isNew && g.stage>0 && r.stage===g.stage;
+    let inner="";
+    g.fields.forEach(f=>{
+      const v = r[f.k]!=null ? r[f.k] : "";
+      let ctrl="";
+      if(f.type==="textarea") ctrl=`<textarea data-k="${f.k}">${esc(v)}</textarea>`;
+      else if(f.type==="select") ctrl=`<select data-k="${f.k}">${f.opts.map(o=>`<option ${o===v?"selected":""}>${esc(o)}</option>`).join("")}</select>`;
+      else ctrl=`<input type="${f.type==='number'?'number':f.type==='date'?'date':'text'}" data-k="${f.k}" value="${esc(v)}">`;
+      inner+=`<div class="field ${f.wide?'wide':''}"><label>${esc(f.label)}${f.req?' *':''}</label>${ctrl}</div>`;
+    });
+    // computed quota balance in stage 6 group
+    if(g.stage===6 && !isNew){ const bal=(r.quotaTotal||0)-(r.quotaUsed||0); inner+=`<div class="field"><label>提货权益余额(自动)</label><div class="ro">¥${bal.toLocaleString()}</div></div>`; }
+    groups+=`<fieldset class="${isCur?'current':''}"><legend class="${g.stage>0?'gold':''}">${esc(g.title)}${isCur?' · 当前阶段':''}</legend><div class="grid2">${inner}</div></fieldset>`;
+  });
+  groups+=`<fieldset><legend>备注</legend><div class="field wide"><textarea data-k="notes">${esc(r.notes||"")}</textarea></div></fieldset>`;
+
+  // history
+  let hist="";
+  if(!isNew){
+    const h=audit.filter(a=>a.rid===id).slice().reverse().slice(0,30);
+    hist=`<div class="hist"><h4>修改留痕 · 本记录(${audit.filter(a=>a.rid===id).length})</h4>`+
+      (h.length?h.map(a=>{
+        let d = a.type==="edit"&&a.details.length ? a.details.map(x=>`${esc(x.label)}: ${esc(x.from||"空")}→${esc(x.to||"空")}`).join("; ") : esc(a.summary);
+        return `<div class="hist-item"><span class="t">${fmt(a.ts)}</span><span class="x"><b>${esc(a.uname)}</b> · ${esc(a.type)} · ${d}</span></div>`;
+      }).join(""):`<div class="hist-item"><span class="x" style="color:var(--muted-2)">无</span></div>`)+`</div>`;
+  }
+
+  ov.innerHTML=`<div class="modal">
+    <div class="modal-head">
+      <div>
+        <h3>${isNew?"新建代理记录":esc(r.name||"(未命名)")}</h3>
+        <div class="sub">${isNew?"将创建于 阶段一 · 线索接触":("阶段 "+(r.stage===ONGOING?"持续运营":r.stage+" · "+stageName(r.stage))+" · 创建于 "+fmt(r.createdAt)+" by "+esc(r.createdBy||"—"))}</div>
+      </div>
+      <button class="modal-x" data-close>×</button>
+    </div>
+    <div class="modal-body">${groups}${hist}</div>
+    <div class="modal-foot">
+      <button class="btn primary" data-save>保存</button>
+      ${!isNew?'<button class="btn gold" data-gate2>过门 →</button>':''}
+      <div style="flex:1"></div>
+      ${!isNew?'<button class="btn ghost danger" data-del>删除</button>':''}
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+  ov.addEventListener("click",e=>{ if(e.target===ov) closeOverlay(); });
+  ov.querySelector("[data-close]").onclick=closeOverlay;
+  ov.querySelector("[data-save]").onclick=()=>saveRecord(ov,isNew);
+  const g2=ov.querySelector("[data-gate2]"); if(g2) g2.onclick=()=>{ closeOverlay(); openGate(id); };
+  const dl=ov.querySelector("[data-del]"); if(dl) dl.onclick=()=>delRecord(id);
+  setTimeout(()=>{ const fi=ov.querySelector('input[data-k="name"]'); if(fi&&isNew)fi.focus(); },30);
+}
+function closeOverlay(){ const o=$("#recordOverlay")||$("#gateOverlay"); if(o)o.remove(); }
+function readForm(ov){ const o={}; ov.querySelectorAll("[data-k]").forEach(inp=>{ o[inp.dataset.k]=inp.value.trim(); }); return o; }
+function saveRecord(ov,isNew){
+  const data=readForm(ov);
+  if(!data.name){ toast("请填写公司 / 姓名"); return; }
+  if(isNew){
+    const r=Object.assign({id:uid(),stage:1,status:"活跃",createdAt:now(),createdBy:me.name,updatedAt:now()},data);
+    records.push(r);
+    logAudit("create",r,"新建记录(阶段一)",[]);
+    save(); closeOverlay(); renderAll(); toast("已新建:"+r.name);
+    return;
+  }
+  const r=records.find(x=>x.id===editingId); if(!r) return;
+  const changes=[];
+  Object.keys(data).forEach(k=>{
+    const oldV=(r[k]!=null?String(r[k]):""); const newV=data[k];
+    if(oldV!==newV){ changes.push({field:k,label:LABELS[k]||k,from:oldV,to:newV}); r[k]=newV; }
+  });
+  if(!changes.length){ closeOverlay(); toast("未做修改"); return; }
+  r.updatedAt=now();
+  logAudit("edit",r,changes.length+"项修改",changes);
+  save(); closeOverlay(); renderAll(); toast("已保存 · "+changes.length+" 项修改已留痕");
+}
+function delRecord(id){
+  const r=records.find(x=>x.id===id); if(!r) return;
+  if(!confirm("确认删除「"+(r.name||"")+"」?此操作会记入留痕。")) return;
+  logAudit("delete",r,"删除记录",[]);
+  records=records.filter(x=>x.id!==id);
+  save(); closeOverlay(); renderAll(); toast("已删除并留痕");
+}
+
+/* ============================================================= GATE MODAL */
+function openGate(id){
+  gateId=id; gateChecks={};
+  const r=records.find(x=>x.id===id); if(!r) return;
+  const cur=r.stage; const stage=STAGES[cur-1]; if(!stage){ toast("已在持续运营阶段"); return; }
+  const toN = cur===6 ? ONGOING : cur+1;
+  const ov=el("div","overlay"); ov.id="gateOverlay";
+  ov.innerHTML=`<div class="modal narrow">
+    <div class="modal-head"><div><h3>过门检查</h3><div class="sub">${esc(r.name)}</div></div><button class="modal-x" data-close>×</button></div>
+    <div class="modal-body">
+      <div class="gatehead">
+        <div class="门">门</div>
+        <div class="arrow">阶段 <b>${cur} ${esc(stage.name)}</b> &nbsp;→&nbsp; <b>${toN===ONGOING?"持续运营":toN+" "+stageName(toN)}</b></div>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">逐项确认过门条件,全部满足方可放行:</div>
+      <div id="gateChecks">${stage.gate.map((c,i)=>`<div class="checkitem" data-i="${i}"><span class="box">✓</span><span class="lbl">${esc(c)}</span></div>`).join("")}</div>
+      <input class="gate-remark" id="gateRemark" placeholder="过门备注(可选,记入留痕)">
+      <div class="gatewarn" id="gateWarn">请勾选全部条件后再放行。</div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn gold" data-confirm>确认过门 →</button>
+      <div style="flex:1"></div>
+      <button class="btn ghost" data-close2>取消</button>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+  ov.addEventListener("click",e=>{ if(e.target===ov) closeOverlay(); });
+  ov.querySelector("[data-close]").onclick=closeOverlay;
+  ov.querySelector("[data-close2]").onclick=closeOverlay;
+  ov.querySelectorAll(".checkitem").forEach(it=>{
+    it.onclick=()=>{ const i=it.dataset.i; gateChecks[i]=!gateChecks[i]; it.classList.toggle("on",gateChecks[i]); $("#gateWarn").style.display="none"; };
+  });
+  ov.querySelector("[data-confirm]").onclick=()=>confirmGate(r,stage,toN);
+}
+function confirmGate(r,stage,toN){
+  const allOn = stage.gate.every((c,i)=>gateChecks[i]);
+  if(!allOn){ $("#gateWarn").style.display="block"; return; }
+  const remark=$("#gateRemark").value.trim();
+  const from=r.stage;
+  r.stage=toN;
+  if(toN===ONGOING && !r.status) r.status="活跃";
+  r.updatedAt=now();
+  const summary=`过门 阶段${from} → ${toN===ONGOING?"持续运营":toN} ✓ ${stage.gate.join(" / ")}${remark?(" · "+remark):""}`;
+  logAudit("gate",r,summary,[]);
+  save(); closeOverlay(); renderAll();
+  toast("已过门 → "+(toN===ONGOING?"持续运营":stageName(toN)));
+}
+
+/* ============================================================= EXPORT / IMPORT */
+function exportData(){
+  const blob=new Blob([JSON.stringify({records,audit,exportedAt:now(),by:me.name},null,2)],{type:"application/json"});
+  dl(blob, "sparkclaw_运营记录_备份_"+new Date().toISOString().slice(0,10)+".json");
+  // also CSV
+  const cols=["name","stage","owner","channelCode","region","contact","phone","deposit","quotaTotal","quotaUsed","dealsCount","status","updatedAt"];
+  const head=["公司/姓名","阶段","对接人","渠道码","地区","联系人","联系方式","定金","提货权益额度","已核销","累计成交","状态","最近更新"];
+  let csv="\ufeff"+head.join(",")+"\n";
+  records.forEach(r=>{ csv+=cols.map(c=>{ let v=c==="stage"?(r.stage===ONGOING?"持续运营":r.stage+" "+stageName(r.stage)):(r[c]??""); return `"${String(v).replace(/"/g,'""')}"`; }).join(",")+"\n"; });
+  dl(new Blob([csv],{type:"text/csv"}), "sparkclaw_运营记录_"+new Date().toISOString().slice(0,10)+".csv");
+  toast("已导出 JSON 备份 + CSV");
+}
+function dl(blob,name){ const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000); }
+function importData(file){
+  const fr=new FileReader();
+  fr.onload=()=>{ try{ const d=JSON.parse(fr.result); if(!Array.isArray(d.records)) throw 0;
+    if(!confirm("导入将覆盖当前数据("+records.length+"条记录)。确认?")) return;
+    records=d.records; audit=Array.isArray(d.audit)?d.audit:[];
+    logAudit("create",{id:"-",name:"数据导入"},"导入备份("+records.length+"条记录) by "+me.name,[]);
+    save(); renderAll(); toast("已导入 "+records.length+" 条记录");
+  }catch(e){ toast("导入失败:文件格式不正确"); } };
+  fr.readAsText(file);
+}
+
+/* ============================================================= RENDER / NAV */
+function renderAll(){
+  refreshFilterOptions();
+  $("#tb-board").textContent=visibleRecords().length;
+  $("#tb-list").textContent=visibleRecords().length;
+  $("#tb-audit").textContent=audit.length;
+  if(curView==="board") renderBoard();
+  else if(curView==="list") renderList();
+  else if(curView==="audit") renderAudit();
+}
+function switchView(v){
+  curView=v;
+  document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t.dataset.view===v));
+  ["board","list","audit","ref"].forEach(x=>$("#view-"+x).classList.toggle("hidden",x!==v));
+  if(v==="ref") renderRef(); else renderAll();
+}
+
+/* ---------- events ---------- */
+$("#loginBtn").onclick=attemptLogin;
+$("#loginInput").addEventListener("keydown",e=>{ if(e.key==="Enter") $("#loginPwd").focus(); });
+$("#loginPwd").addEventListener("keydown",e=>{ if(e.key==="Enter") attemptLogin(); });
+$("#tabs").addEventListener("click",e=>{ const t=e.target.closest(".tab"); if(t) switchView(t.dataset.view); });
+$("#logoutBtn").onclick=logout;
+$("#newBtn").onclick=()=>openRecord(null);
+$("#exportBtn").onclick=exportData;
+$("#importBtn").onclick=()=>$("#importFile").click();
+$("#importFile").onchange=e=>{ if(e.target.files[0]) importData(e.target.files[0]); e.target.value=""; };
+$("#searchInput").addEventListener("input",()=>renderAll());
+$("#filterOwner").addEventListener("change",()=>renderAll());
+$("#filterTier").addEventListener("change",()=>renderAll());
+document.addEventListener("click",e=>{
+  const o=e.target.closest("[data-open]"); if(o){ openRecord(o.dataset.open); return; }
+  const g=e.target.closest("[data-gate]"); if(g){ openGate(g.dataset.gate); return; }
+  const s=e.target.closest("th[data-sort]"); if(s){ const k=s.dataset.sort; if(sortKey===k) sortDir*=-1; else {sortKey=k;sortDir=1;} renderList(); return; }
+});
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeOverlay(); });
+
+/* ---------- boot ---------- */
+renderLoginChips();
+(function boot(){ const s=Store.get(K.SES); if(s && s.name && USERS.find(u=>u.name===s.name)){ enterApp({name:s.name, role:s.role, type:s.type||"internal"}); } })();
+</script>
+</body>
+</html>
