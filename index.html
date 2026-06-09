@@ -201,6 +201,9 @@ legend.gold{color:var(--gold)}
 .checkitem .lbl{font-weight:700;font-size:14px}
 .gate-remark{width:100%;padding:9px 11px;background:rgba(255,255,255,.04);border:1px solid var(--line-2);border-radius:8px;color:#fff;margin-top:6px}
 .gatewarn{font-size:12px;color:var(--warn);margin-top:8px;display:none}
+.gate-auto{font-size:12px;line-height:1.55;padding:9px 12px;border-radius:9px;margin-bottom:4px}
+.gate-auto.ok{color:var(--success);background:rgba(0,200,150,.08);border:1px solid rgba(0,200,150,.3)}
+.gate-auto.warn{color:#ffb3a1;background:rgba(255,107,71,.09);border:1px solid rgba(255,107,71,.4)}
 
 /* history block in record modal */
 .hist{margin-top:6px;border-top:1px solid var(--line);padding-top:12px}
@@ -322,12 +325,12 @@ const USERS = [
 /* ---------- stages & gates (from SOP) ---------- */
 const TIERS = ["普通代理","银牌代理","金牌代理","钻石代理"];
 const STAGES = [
-  {n:1, name:"线索接触",            gate:["真实意向","具备渠道能力"]},
-  {n:2, name:"资质评估 + 报备",     gate:["评估通过","报备无冲突"]},
+  {n:1, name:"线索接触",            gate:["真实意向"]},
+  {n:2, name:"资质评估 + 报备",     gate:["报备无冲突"]},
   {n:3, name:"政策沟通 + 方案确认", gate:["确认档位","季度目标","接受政策"]},
-  {n:4, name:"签约 + 付款",         gate:["合同生效","款项到账"]},
+  {n:4, name:"签约 + 付款",         gate:["款项到账","合同生效"]},
   {n:5, name:"代理开通 + 赋能",     gate:["渠道码生效","培训完成","物料齐全"]},
-  {n:6, name:"引流推广 + 成交结算", gate:["首个码成交","稳定引流/结算"]},
+  {n:6, name:"引流推广 + 成交结算", gate:["首个码成交"]},
 ];
 const ONGOING = 7; // 持续运营
 function stageName(n){ return n===ONGOING ? "持续运营" : (STAGES[n-1]?STAGES[n-1].name:"—"); }
@@ -662,6 +665,16 @@ function delRecord(id){
 }
 
 /* ============================================================= GATE MODAL */
+function dupCheck(rec){
+  const out=[];
+  records.forEach(x=>{
+    if(x.id===rec.id) return;
+    const nameHit = rec.name && x.name && x.name.trim()===rec.name.trim();
+    const phoneHit = rec.phone && x.phone && x.phone.trim()===rec.phone.trim();
+    if(nameHit||phoneHit) out.push({name:x.name||"(未命名)", by:(nameHit&&phoneHit)?"同名同电话":nameHit?"同名":"同电话"});
+  });
+  return out;
+}
 function openGate(id){
   gateId=id; gateChecks={};
   const r=records.find(x=>x.id===id); if(!r) return;
@@ -677,6 +690,7 @@ function openGate(id){
       </div>
       <div style="font-size:12px;color:var(--muted);margin-bottom:10px">逐项确认过门条件,全部满足方可放行:</div>
       <div id="gateChecks">${stage.gate.map((c,i)=>`<div class="checkitem" data-i="${i}"><span class="box">✓</span><span class="lbl">${esc(c)}</span></div>`).join("")}</div>
+      <div class="gate-auto hidden" id="gateAuto"></div>
       <input class="gate-remark" id="gateRemark" placeholder="过门备注(可选,记入留痕)">
       <div class="gatewarn" id="gateWarn">请勾选全部条件后再放行。</div>
     </div>
@@ -693,6 +707,19 @@ function openGate(id){
   ov.querySelectorAll(".checkitem").forEach(it=>{
     it.onclick=()=>{ const i=it.dataset.i; gateChecks[i]=!gateChecks[i]; it.classList.toggle("on",gateChecks[i]); $("#gateWarn").style.display="none"; };
   });
+  // 自动检测:「报备无冲突」= 按姓名/电话查重。无重复→默认勾选;有重复→默认填备注并提醒。
+  const fIdx=stage.gate.indexOf("报备无冲突");
+  if(fIdx>=0){
+    const dupes=dupCheck(r); const note=ov.querySelector("#gateAuto"); const it=ov.querySelector(`.checkitem[data-i="${fIdx}"]`);
+    if(dupes.length===0){
+      gateChecks[fIdx]=true; it.classList.add("on");
+      note.className="gate-auto ok"; note.textContent="✓ 自动检测:未发现重复(姓名 / 电话),已默认勾选「报备无冲突」。";
+    } else {
+      const desc=dupes.map(d=>`${d.name}(${d.by})`).join("、");
+      note.className="gate-auto warn"; note.textContent="⚠ 自动检测:发现可能重复 — "+desc+"。请核实后再勾选放行。";
+      $("#gateRemark").value="检测到可能重复:"+desc+" — 请核实。";
+    }
+  }
   ov.querySelector("[data-confirm]").onclick=()=>confirmGate(r,stage,toN);
 }
 function confirmGate(r,stage,toN){
