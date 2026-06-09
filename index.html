@@ -86,22 +86,19 @@ input,select,textarea{font-family:inherit;font-size:14px}
 .view-wrap{flex:1;overflow:auto;padding:4px 20px 24px}
 
 /* ---------- BOARD ---------- */
-.board{display:flex;gap:0;align-items:flex-start;min-height:100%;padding-bottom:8px}
-.col{flex:none;width:252px;display:flex;flex-direction:column;background:rgba(255,255,255,.018);border:1px solid var(--line);border-radius:14px;max-height:calc(100vh - 150px)}
+.board{display:flex;gap:0;align-items:flex-start;width:100%;min-height:100%;padding-bottom:8px}
+.col{flex:1 1 0;min-width:150px;display:flex;flex-direction:column;background:rgba(255,255,255,.018);border:1px solid var(--line);border-radius:14px;max-height:calc(100vh - 150px)}
 .col-head{padding:12px 13px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:9px}
 .col-num{width:24px;height:24px;flex:none;border-radius:7px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:12px;background:rgba(0,217,255,.12);color:var(--accent);border:1px solid rgba(0,217,255,.3)}
 .col.ongoing .col-num{background:rgba(0,200,150,.12);color:var(--success);border-color:rgba(0,200,150,.3)}
 .col-title{font-weight:700;font-size:13px;line-height:1.25}
 .col-count{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--muted)}
-.col-body{padding:10px;overflow-y:auto;display:flex;flex-direction:column;gap:9px}
+.col-body{padding:9px;overflow-y:auto;display:flex;flex-direction:column;gap:9px}
 .col-body:empty::after{content:"暂无";display:block;text-align:center;color:var(--muted-2);font-size:12px;padding:14px 0}
 
-.gate{flex:none;width:92px;align-self:stretch;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:6px 4px;position:relative}
-.gate::before{content:"";position:absolute;top:48px;bottom:18px;width:0;border-left:1.5px dashed rgba(255,182,39,.45)}
-.gate-pill{position:relative;z-index:1;font-family:var(--serif);font-weight:700;font-size:13px;color:#2a1c00;background:linear-gradient(180deg,var(--gold),var(--gold-dim));border-radius:999px;padding:4px 12px;box-shadow:0 4px 14px rgba(255,182,39,.25)}
-.gate-cond{font-size:10px;line-height:1.5;color:var(--gold);text-align:center;opacity:.9}
-.gate-cond span{display:block;white-space:nowrap}
-.gate-arrow{color:var(--gold-dim);font-size:13px}
+.gate{flex:0 0 30px;width:30px;align-self:stretch;display:flex;flex-direction:column;align-items:center;padding-top:52px;position:relative}
+.gate::before{content:"";position:absolute;top:80px;bottom:14px;width:0;border-left:1.5px dashed rgba(255,182,39,.4)}
+.gate-pill{position:relative;z-index:1;font-family:var(--serif);font-weight:700;font-size:12px;color:#2a1c00;background:linear-gradient(180deg,var(--gold),var(--gold-dim));border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(255,182,39,.3);cursor:default}
 
 .card{background:linear-gradient(180deg,rgba(29,51,84,.55),rgba(21,40,65,.5));border:1px solid var(--line-2);border-radius:11px;padding:11px 12px;transition:.15s;position:relative}
 .card:hover{border-color:var(--accent-dim);transform:translateY(-1px)}
@@ -336,61 +333,19 @@ const ONGOING = 7; // 持续运营
 function stageName(n){ return n===ONGOING ? "持续运营" : (STAGES[n-1]?STAGES[n-1].name:"—"); }
 
 /* ---------- field schema (登记台账 per stage) ---------- */
-const FIELD_GROUPS = [
-  {stage:0, title:"基础信息", fields:[
-    {k:"name",label:"公司 / 姓名",type:"text",req:true,wide:true},
-    {k:"contact",label:"联系人",type:"text"},
-    {k:"phone",label:"联系方式",type:"text"},
-    {k:"region",label:"地区",type:"text"},
-    {k:"source",label:"来源",type:"text"},
-    {k:"referrer",label:"推荐人(归属)",type:"text"},
-    {k:"owner",label:"对接人",type:"text"},
-  ]},
-  {stage:1, title:"阶段一 · 线索接触", fields:[
-    {k:"firstContact",label:"首次接触日期",type:"date"},
-    {k:"intentTier",label:"意向档位",type:"select",opts:["",...TIERS]},
-  ]},
-  {stage:2, title:"阶段二 · 资质评估 + 报备", fields:[
-    {k:"profile",label:"渠道画像",type:"textarea",wide:true},
-    {k:"evalConclusion",label:"评估结论",type:"text",wide:true},
-    {k:"suggestTier",label:"建议档位",type:"select",opts:["",...TIERS]},
-    {k:"filingStatus",label:"报备状态",type:"select",opts:["","待报备","已报备","有冲突"]},
-    {k:"filingExpiry",label:"报备有效期",type:"date"},
-    {k:"conflictCheck",label:"冲突核查",type:"text"},
-  ]},
-  {stage:3, title:"阶段三 · 政策沟通 + 方案确认", fields:[
-    {k:"commLog",label:"沟通记录",type:"textarea",wide:true},
-    {k:"confirmTier",label:"确认档位",type:"select",opts:["",...TIERS]},
-    {k:"quarterTarget",label:"季度目标(台)",type:"number"},
-    {k:"expectDeposit",label:"预计定金 / 货款",type:"text"},
-  ]},
-  {stage:4, title:"阶段四 · 签约 + 付款", fields:[
-    {k:"contractNo",label:"合同编号",type:"text"},
-    {k:"signDate",label:"签约日期",type:"date"},
-    {k:"deposit",label:"定金 (¥)",type:"number"},
-    {k:"quotaTotal",label:"提货权益额度 (¥)",type:"number"},
-    {k:"channelCode",label:"专属渠道码",type:"text"},
-    {k:"receiptNo",label:"收款凭证号",type:"text"},
-    {k:"financeConfirm",label:"财务确认",type:"select",opts:["","否","是"]},
-  ]},
-  {stage:5, title:"阶段五 · 代理开通 + 赋能", fields:[
-    {k:"codeActive",label:"渠道码生效",type:"select",opts:["","否","是"]},
-    {k:"backendReady",label:"后台开通",type:"select",opts:["","否","是"]},
-    {k:"trainDone",label:"培训完成",type:"select",opts:["","否","是"]},
-    {k:"kitSent",label:"物料发放",type:"select",opts:["","否","是"]},
-  ]},
-  {stage:6, title:"阶段六 · 引流推广 + 成交结算", fields:[
-    {k:"firstDealDate",label:"首单日期",type:"date"},
-    {k:"dealsCount",label:"累计成交(按码,台)",type:"number"},
-    {k:"quotaUsed",label:"提货权益核销 (¥)",type:"number"},
-    {k:"pointsUsed",label:"积分消耗",type:"number"},
-    {k:"commissionSettled",label:"提成结算 (¥)",type:"number"},
-    {k:"referral",label:"复购 / 转介绍",type:"text"},
-    {k:"tierChange",label:"升降级",type:"text"},
-    {k:"status",label:"状态",type:"select",opts:["活跃","暂停","退出"]},
-  ]},
+// 极简记录字段(只为"快速记一笔")。详细沟通/合同/成交等统一写进「备注」,不强制结构化。
+const FIELDS = [
+  {k:"name",   label:"公司 / 姓名", type:"text",  req:true, wide:true},
+  {k:"owner",  label:"对接人",     type:"text"},
+  {k:"tier",   label:"档位",       type:"select", opts:["未定档","普通代理","银牌代理","金牌代理","钻石代理"]},
+  {k:"contact",label:"联系人",     type:"text"},
+  {k:"phone",  label:"联系方式",   type:"text"},
+  {k:"region", label:"地区",       type:"text"},
+  {k:"source", label:"来源",       type:"text"},
+  {k:"channelCode", label:"渠道码（签约后填）", type:"text"},
+  {k:"notes",  label:"备注（沟通、合同、成交等都可记这里）", type:"textarea", wide:true},
 ];
-const LABELS = {}; FIELD_GROUPS.forEach(g=>g.fields.forEach(f=>LABELS[f.k]=f.label));
+const LABELS = {}; FIELDS.forEach(f=>LABELS[f.k]=f.label);
 
 /* ---------- state ---------- */
 let me = null;
@@ -416,9 +371,9 @@ function logAudit(type, rec, summary, details){
 function seedDemo(){
   const base = (o)=>Object.assign({id:uid(),stage:1,status:"活跃",createdAt:now(),createdBy:"系统(示例)",updatedAt:now()},o);
   records = [
-    base({name:"示例 · 蓉城数码", contact:"王磊", phone:"138••••2210", region:"成都", source:"老客户推荐", referrer:"李航", owner:"陈磊", stage:1, intentTier:"银牌代理", firstContact:"2026-05-20"}),
-    base({name:"示例 · 江南智选", contact:"周敏", phone:"139••••7788", region:"南京", source:"展会", owner:"黄铮", stage:4, confirmTier:"金牌代理", quarterTarget:50, contractNo:"HT-2026-018", signDate:"2026-05-28", deposit:20000, quotaTotal:100000, channelCode:"SC-JN-7788", financeConfirm:"是"}),
-    base({name:"示例 · 湾区云联", contact:"陈先生", phone:"137••••3030", region:"深圳", owner:"杨萍", stage:6, confirmTier:"钻石代理", channelCode:"SC-WQ-3030", quotaTotal:250000, codeActive:"是", backendReady:"是", trainDone:"是", kitSent:"是", firstDealDate:"2026-06-02", dealsCount:12, quotaUsed:42000, commissionSettled:8400, status:"活跃"}),
+    base({name:"示例 · 蓉城数码", contact:"王磊", phone:"138••••2210", region:"成都", source:"老客户推荐", owner:"陈磊", stage:1, tier:"银牌代理"}),
+    base({name:"示例 · 江南智选", contact:"周敏", phone:"139••••7788", region:"南京", source:"展会", owner:"黄铮", stage:4, tier:"金牌代理", channelCode:"SC-JN-7788"}),
+    base({name:"示例 · 湾区云联", contact:"陈先生", phone:"137••••3030", region:"深圳", owner:"杨萍", stage:6, tier:"钻石代理", channelCode:"SC-WQ-3030", notes:"已动销,首单已成交"}),
   ];
   audit = [];
   records.forEach(r=>audit.push({ts:r.createdAt,uid:"系统",uname:"系统",urole:"",rid:r.id,rname:r.name,type:"create",summary:"导入示例记录",details:[]}));
@@ -469,10 +424,10 @@ function activeFilters(){ return {q:$("#searchInput").value.trim().toLowerCase()
 function matchFilter(r){
   const f=activeFilters();
   if(f.owner && (r.owner||"")!==f.owner) return false;
-  const tier=r.confirmTier||r.suggestTier||r.intentTier||"";
+  const tier=recTier(r);
   if(f.tier && tier!==f.tier) return false;
   if(f.q){
-    const hay=[r.name,r.contact,r.phone,r.channelCode,r.owner,r.region,r.contractNo].join(" ").toLowerCase();
+    const hay=[r.name,r.contact,r.phone,r.channelCode,r.owner,r.region,r.source,r.notes].join(" ").toLowerCase();
     if(!hay.includes(f.q)) return false;
   }
   return true;
@@ -484,7 +439,7 @@ function refreshFilterOptions(){
   os.value=cur;
   const ts=$("#filterTier"); if(ts.options.length<=1){ ts.innerHTML='<option value="">全部档位</option>'+TIERS.map(t=>`<option>${esc(t)}</option>`).join(""); }
 }
-function recTier(r){ return r.confirmTier||r.suggestTier||r.intentTier||""; }
+function recTier(r){ return r.tier||""; }
 
 /* ============================================================= BOARD */
 function renderBoard(){
@@ -511,7 +466,9 @@ function renderBoard(){
 }
 function gateLane(stage){
   const g=el("div","gate");
-  g.innerHTML = `<div class="gate-pill">门</div><div class="gate-cond">${stage.gate.map(c=>`<span>${esc(c)}</span>`).join("")}</div><div class="gate-arrow">▸</div>`;
+  const cond="过门条件:"+stage.gate.join(" + ");
+  g.title=cond;
+  g.innerHTML = `<div class="gate-pill" title="${esc(cond)}">门</div>`;
   return g;
 }
 function cardEl(r){
@@ -522,8 +479,6 @@ function cardEl(r){
   if(r.stage===ONGOING) metas+=`<span class="pill st-${esc(r.status||"活跃")}">${esc(r.status||"活跃")}</span>`;
   let lines="";
   if(r.region||r.phone) lines+=`<div class="cardline"><span>${esc(r.region||"")}</span><b>${esc(r.phone||"")}</b></div>`;
-  if(r.stage>=4 && r.quotaTotal){ const bal=(r.quotaTotal||0)-(r.quotaUsed||0); lines+=`<div class="cardline"><span>提货权益余</span><b>¥${bal.toLocaleString()}</b></div>`; }
-  if(r.stage>=6 && r.dealsCount) lines+=`<div class="cardline"><span>累计成交</span><b>${r.dealsCount} 台</b></div>`;
   const canPass = r.stage!==ONGOING;
   c.innerHTML=`
     <div class="cardname" data-open="${r.id}">${esc(r.name||"(未命名)")}</div>
@@ -629,23 +584,16 @@ function openRecord(id){
   const isNew = !id;
   const ov=el("div","overlay");
   ov.id="recordOverlay";
-  let groups="";
-  FIELD_GROUPS.forEach(g=>{
-    const isCur = !isNew && g.stage>0 && r.stage===g.stage;
-    let inner="";
-    g.fields.forEach(f=>{
-      const v = r[f.k]!=null ? r[f.k] : "";
-      let ctrl="";
-      if(f.type==="textarea") ctrl=`<textarea data-k="${f.k}">${esc(v)}</textarea>`;
-      else if(f.type==="select") ctrl=`<select data-k="${f.k}">${f.opts.map(o=>`<option ${o===v?"selected":""}>${esc(o)}</option>`).join("")}</select>`;
-      else ctrl=`<input type="${f.type==='number'?'number':f.type==='date'?'date':'text'}" data-k="${f.k}" value="${esc(v)}">`;
-      inner+=`<div class="field ${f.wide?'wide':''}"><label>${esc(f.label)}${f.req?' *':''}</label>${ctrl}</div>`;
-    });
-    // computed quota balance in stage 6 group
-    if(g.stage===6 && !isNew){ const bal=(r.quotaTotal||0)-(r.quotaUsed||0); inner+=`<div class="field"><label>提货权益余额(自动)</label><div class="ro">¥${bal.toLocaleString()}</div></div>`; }
-    groups+=`<fieldset class="${isCur?'current':''}"><legend class="${g.stage>0?'gold':''}">${esc(g.title)}${isCur?' · 当前阶段':''}</legend><div class="grid2">${inner}</div></fieldset>`;
+  let inner="";
+  FIELDS.forEach(f=>{
+    const v = r[f.k]!=null ? r[f.k] : "";
+    let ctrl="";
+    if(f.type==="textarea") ctrl=`<textarea data-k="${f.k}">${esc(v)}</textarea>`;
+    else if(f.type==="select") ctrl=`<select data-k="${f.k}">${f.opts.map(o=>`<option ${o===v?"selected":""}>${esc(o)}</option>`).join("")}</select>`;
+    else ctrl=`<input type="${f.type==='number'?'number':f.type==='date'?'date':'text'}" data-k="${f.k}" value="${esc(v)}">`;
+    inner+=`<div class="field ${f.wide?'wide':''}"><label>${esc(f.label)}${f.req?' *':''}</label>${ctrl}</div>`;
   });
-  groups+=`<fieldset><legend>备注</legend><div class="field wide"><textarea data-k="notes">${esc(r.notes||"")}</textarea></div></fieldset>`;
+  const groups=`<div class="grid2">${inner}</div>`;
 
   // history
   let hist="";
@@ -766,8 +714,8 @@ function exportData(){
   const blob=new Blob([JSON.stringify({records,audit,exportedAt:now(),by:me.name},null,2)],{type:"application/json"});
   dl(blob, "sparkclaw_运营记录_备份_"+new Date().toISOString().slice(0,10)+".json");
   // also CSV
-  const cols=["name","stage","owner","channelCode","region","contact","phone","deposit","quotaTotal","quotaUsed","dealsCount","status","updatedAt"];
-  const head=["公司/姓名","阶段","对接人","渠道码","地区","联系人","联系方式","定金","提货权益额度","已核销","累计成交","状态","最近更新"];
+  const cols=["name","stage","tier","owner","channelCode","region","contact","phone","source","notes","updatedAt"];
+  const head=["公司/姓名","阶段","档位","对接人","渠道码","地区","联系人","联系方式","来源","备注","最近更新"];
   let csv="\ufeff"+head.join(",")+"\n";
   records.forEach(r=>{ csv+=cols.map(c=>{ let v=c==="stage"?(r.stage===ONGOING?"持续运营":r.stage+" "+stageName(r.stage)):(r[c]??""); return `"${String(v).replace(/"/g,'""')}"`; }).join(",")+"\n"; });
   dl(new Blob([csv],{type:"text/csv"}), "sparkclaw_运营记录_"+new Date().toISOString().slice(0,10)+".csv");
